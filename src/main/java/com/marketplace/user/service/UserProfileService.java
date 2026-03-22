@@ -1,6 +1,7 @@
 package com.marketplace.user.service;
 
 import com.marketplace.user.domain.UserProfile;
+import com.marketplace.user.dto.UserProfilePublicResponse;
 import com.marketplace.user.dto.UserProfileRequest;
 import com.marketplace.user.dto.UserProfileResponse;
 import com.marketplace.user.exception.ProfileAlreadyExistsException;
@@ -68,6 +69,35 @@ public class UserProfileService {
                 updatedProfile.getAddress(),
                 updatedProfile.getCreatedAt(),
                 updatedProfile.getUpdatedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyProfile(UUID userId) {
+        UserProfile profile = repository.findById(userId)
+                .orElseThrow(() -> new ProfileNotFoundException("Perfil não encontrado."));
+
+        return new UserProfileResponse(
+                profile.getId(),
+                profile.getName(),
+                profile.getCpf(),
+                profile.getPhone(),
+                profile.getAddress(),
+                profile.getCreatedAt(),
+                profile.getUpdatedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfilePublicResponse getPublicProfile(UUID targetId) {
+        UserProfile profile = repository.findById(targetId)
+                .orElseThrow(() -> new ProfileNotFoundException("Usuário não encontrado."));
+
+        return new UserProfilePublicResponse(
+                profile.getId(),
+                profile.getName(),
+                5,
+                profile.getCreatedAt()
         );
     }
 }

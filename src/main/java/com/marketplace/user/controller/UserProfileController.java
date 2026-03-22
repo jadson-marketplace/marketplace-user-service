@@ -1,5 +1,6 @@
 package com.marketplace.user.controller;
 
+import com.marketplace.user.dto.UserProfilePublicResponse;
 import com.marketplace.user.dto.UserProfileRequest;
 import com.marketplace.user.dto.UserProfileResponse;
 import com.marketplace.user.service.UserProfileService;
@@ -37,6 +38,21 @@ public class UserProfileController {
 
         UserProfileResponse response = service.updateProfile(userId, request);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> getMyProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = UUID.fromString(authentication.getName());
+
+        UserProfileResponse response = service.getMyProfile(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserProfilePublicResponse> getPublicProfile(@PathVariable UUID id) {
+        UserProfilePublicResponse response = service.getPublicProfile(id);
         return ResponseEntity.ok(response);
     }
 }

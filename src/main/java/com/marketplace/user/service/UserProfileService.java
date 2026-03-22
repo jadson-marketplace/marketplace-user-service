@@ -4,6 +4,7 @@ import com.marketplace.user.domain.UserProfile;
 import com.marketplace.user.dto.UserProfileRequest;
 import com.marketplace.user.dto.UserProfileResponse;
 import com.marketplace.user.exception.ProfileAlreadyExistsException;
+import com.marketplace.user.exception.ProfileNotFoundException;
 import com.marketplace.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,28 @@ public class UserProfileService {
                 savedProfile.getAddress(),
                 savedProfile.getCreatedAt(),
                 savedProfile.getUpdatedAt()
+        );
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(UUID userId, UserProfileRequest request) {
+        UserProfile profile = repository.findById(userId)
+                .orElseThrow(() -> new ProfileNotFoundException("Perfil não encontrado. Crie seu perfil primeiro."));
+
+        profile.setName(request.name());
+        profile.setPhone(request.phone());
+        profile.setAddress(request.address());
+
+        UserProfile updatedProfile = repository.save(profile);
+
+        return new UserProfileResponse(
+                updatedProfile.getId(),
+                updatedProfile.getName(),
+                updatedProfile.getCpf(),
+                updatedProfile.getPhone(),
+                updatedProfile.getAddress(),
+                updatedProfile.getCreatedAt(),
+                updatedProfile.getUpdatedAt()
         );
     }
 }

@@ -1,0 +1,53 @@
+services:
+  postgres-user:
+    image: postgres:16-alpine
+    container_name: user-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-user_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-user_password}
+      POSTGRES_DB: ${DB_NAME:-user_db}
+    ports:
+      # Expondo na 5433 para não conflitar com o banco do Auth Service (5432) na máquina local
+      - "5433:5432"
+    volumes:
+      - user_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user_admin} -d ${DB_NAME:-user_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: marketplace-rabbitmq
+    ports:
+      - "5672:5672"   # Porta do protocolo AMQP
+      - "15672:15672" # Porta do painel de administração web
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user:5432/${DB_NAME:-user_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER:-user_admin}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-user_password}
+      - APP_SECURITY_JWT_SECRET=${JWT_SECRET:-MzRkZjJlNmMtZTQ1Yi00NjI1LWIwN2EtYjA5MjcxYzU3NjBkY2I5NjA5ZDEtNDNhZi00OTFjLWFkNzEtYzg2YzU3MzRiM2Fk}
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  user_pg_data:
